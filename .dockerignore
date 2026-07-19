@@ -77,3 +77,15 @@ llm
 # OS / logs
 .DS_Store
 *.log
+
+
+# Exclude Rust crate source code from the JS/Docker layer if not explicitly needed
+/crates/
+
+# Exclude AI / Agent tool metadata and workspaces
+/.ai/
+/.conductor/
+
+# Strict exclusions for local caching systems
+.turbo/
+.cache/
