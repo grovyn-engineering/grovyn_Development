@@ -18,7 +18,7 @@ COPY apps ./apps
 COPY packages ./packages
 COPY patches ./patches
 
-# FIX: Removed '--no-optional' so that native linux binaries (like @rollup/rollup-linux-x64-gnu) install correctly.
+# Install core dependencies including optional system binaries
 RUN HUSKY=0 pnpm install --frozen-lockfile
 
 # ==========================================
@@ -31,9 +31,6 @@ ENV NODE_OPTIONS=${NODE_OPTIONS}
 
 # Execute Turborepo build for the target application
 RUN pnpm run build:${APP}
-
-# OPTIMISATION: Prune devDependencies before shifting to the final runner stage
-RUN pnpm prune --prod --no-optional
 
 # ==========================================
 # 3. Production Runtime Stage
@@ -50,7 +47,7 @@ ENV PORT=3000
 # Re-enable corepack in the slim base image so the final container recognizes 'pnpm' commands
 RUN corepack enable
 
-# Copy pruned, deployment-ready configurations and folders
+# Copy complete configurations, modules, and target builds into runtime
 COPY --from=deps /repo/package.json /repo/pnpm-lock.yaml /repo/pnpm-workspace.yaml /repo/.npmrc ./
 COPY --from=deps /repo/node_modules ./node_modules
 COPY --from=deps /repo/packages ./packages
