@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Shared build for React Router SSR apps. Build: docker build --build-arg APP=erp -t carbon/erp .
-ARG APP
+ARG APP=erp
 
 # ==========================================
 # 1. Dependency Installation Stage
@@ -18,15 +18,14 @@ COPY apps ./apps
 COPY packages ./packages
 COPY patches ./patches
 
-# FIX: Setting HUSKY=0 bypasses the git hook dependency.
-# --no-optional prevents building unnecessary native compilation blocks.
-RUN HUSKY=0 pnpm install --frozen-lockfile --no-optional
+# FIX: Removed '--no-optional' so that native linux binaries (like @rollup/rollup-linux-x64-gnu) install correctly.
+RUN HUSKY=0 pnpm install --frozen-lockfile
 
 # ==========================================
 # 2. Application Compiling Stage
 # ==========================================
 FROM deps AS build
-ARG APP
+ARG APP=erp
 ARG NODE_OPTIONS="--max-old-space-size=8024"
 ENV NODE_OPTIONS=${NODE_OPTIONS}
 
@@ -34,14 +33,13 @@ ENV NODE_OPTIONS=${NODE_OPTIONS}
 RUN pnpm run build:${APP}
 
 # OPTIMISATION: Prune devDependencies before shifting to the final runner stage
-# This cleans out massive development dependencies like Biome and Turbo.
 RUN pnpm prune --prod --no-optional
 
 # ==========================================
 # 3. Production Runtime Stage
 # ==========================================
 FROM node:22-slim AS runner
-ARG APP
+ARG APP=erp
 WORKDIR /repo
 
 # Environment variables configuration
