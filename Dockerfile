@@ -48,14 +48,14 @@ ENV HOST=0.0.0.0
 # Re-enable corepack in the slim base image so the final container recognizes 'pnpm' commands
 RUN corepack enable
 
-# Copy pruned, deployment-ready configurations and folders
-COPY --from=deps /repo/package.json /repo/pnpm-lock.yaml /repo/pnpm-workspace.yaml /repo/.npmrc ./
+# Copy complete configurations, modules, and target builds into runtime
+COPY --from=deps /repo/package.json /repo/pnpm-lock.yaml /repo/pnpm-workspace.yaml /repo/.npmrc /repo/lingui.config.js ./
 COPY --from=deps /repo/node_modules ./node_modules
 COPY --from=deps /repo/packages ./packages
 COPY --from=build /repo/apps/${APP} ./apps/${APP}
 
 EXPOSE 3000
-WORKDIR /repo/apps/${APP}
 
-# Execute a client-side static application view context to bypass SQL dependencies completely
-CMD ["pnpm", "exec", "vite", "preview", "--port", "3000", "--host", "0.0.0.0"]
+# FIX: Stay at the root directory level (/repo) so Vite can find lingui.config.js,
+# and explicitly feed it the correct path to the pre-built build/client directory.
+CMD ["pnpm", "exec", "vite", "preview", "apps/erp/build/client", "--port", "3000", "--host", "0.0.0.0"]
